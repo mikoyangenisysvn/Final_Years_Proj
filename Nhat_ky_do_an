@@ -1,3 +1,11 @@
-Day 1st: 9/9/2025
-  - Prescaler và 16 bit
-    Prescaler là gì?
+Day 1st 9/9/2025: tìm hiểu 
+    - Về lí thuyết PWM mô tả một chuỗi các xung vuông nhưng đặt biệt ở chỗ thời gian cho giá trị 1 và giá trị 0 
+là không đều nhau, trong 1 chu kì giá trị 1 có thể nhiều hoặc ít hơn giá trị 0.
+CÂU HỎI: Chi dị?
+-> Ứng dụng trong việc điều khiển động cơ, tần số chớp tắt đèn tạo tín hiệu,...
+CÂU HỎI: Ròi làm sao biết 1 nhiều hay ít hơn 0 trong 1 chu kì?
+-> Có 1 giá trị gọi là duty cycle (tạm dịch: chu kì nhiệm vụ; dịch dễ nhớ: nghĩa vụ xe đạp) thể hiện) % tồn 
+tại của giá trị 1; ví dụ:
+            1 bộ counter đếm counter 8 bit nghĩa là đếm từ 0 tới 255 - 256 giá trị
+            Duty cho là 64; lấy (100*64)/256 = 25% => duty cycle = 25%
+   
