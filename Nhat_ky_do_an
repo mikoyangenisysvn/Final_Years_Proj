@@ -8,4 +8,60 @@ CÂU HỎI: Ròi làm sao biết 1 nhiều hay ít hơn 0 trong 1 chu kì?
 tại của giá trị 1; ví dụ:
             1 bộ counter đếm counter 8 bit nghĩa là đếm từ 0 tới 255 - 256 giá trị
             Duty cho là 64; lấy (100*64)/256 = 25% => duty cycle = 25%
-   
+
+Ý TƯỞNG CHỈNH SỬA ĐỒ ÁN TIMER_IP THÀNH PWM
+              +-------------------------+
+           |        APB SLAVE        |
+           | (giải mã addr, ghi/đọc) |
+           +-----------+-------------+
+                       |
+                       v
+             +------------------+
+             |   Register Block |
+             | duty_reg         |
+             | period_reg       |
+             | ctrl_reg         |
+             | status_reg       |
+             +--+-----------+---+
+                |           |
+     duty ------+           +------ period
+                            |
+                          counter
+                            |
+            +---------------+---------------+
+            |                               |
+   counter value                        event: counter==period
+            |                               |
+            v                               v
+   +------------------+             +---------------+
+   |   Comparator     |             | Interrupt     |
+   | if cnt < duty    |             | Logic         |
+   |   PWM_OUT = 1    |             | - set flag    |
+   | else 0           |             | - IRQ out     |
+   +--------+---------+             +-------+-------+
+            |                               |
+         PWM_OUT                          IRQ
+
+=============================================================================================================================
+Day 2nd 10/9/2025: 
+                +--------------------+
+ clk ---------->|    Prescaler       |----> tick
+                +--------------------+
+                           |
+                           v
+                +--------------------+
+                |    Counter (N-bit) |----> wrap
+                +--------------------+
+                           |
+          +----------------+---------------+
+          |                                |
+          v                                v
+ +-------------------+              +-------------------+
+ | Compare Register  |<-------------| Duty Register     |
+ +-------------------+              +-------------------+
+          |
+          v
+   +------------------+
+   |   Comparator     |----> pwm_out
+   +------------------+
+
