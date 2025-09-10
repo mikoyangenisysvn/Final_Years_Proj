@@ -43,7 +43,7 @@ tại của giá trị 1; ví dụ:
          PWM_OUT                          IRQ
 
 =============================================================================================================================
-Day 2nd 10/9/2025: 
+Day 2nd 10/9/2025: thí nghiệm ý tưởng
                 +--------------------+
  clk ---------->|    Prescaler       |----> tick
                 +--------------------+
@@ -65,3 +65,61 @@ Day 2nd 10/9/2025:
    |   Comparator     |----> pwm_out
    +------------------+
 
+Spec cho phiên bản PWM IP (mình soạn dạng đề bài, giống spec Timer IP cũ)
+1. Overview
+
+The PWM IP core is an extension of the Timer IP. It generates a Pulse Width Modulated (PWM) output based on programmable period and duty cycle registers. The design includes an APB slave interface for CPU access, prescaler for frequency adjustment, and optional interrupt signaling.
+
+2. Key Features
+
+APB slave interface (12-bit address, 32-bit data).
+
+Up-counter with programmable period register (PERIOD).
+
+Compare logic with duty register (DUTY) to generate PWM output.
+
+Output signal: pwm_out.
+
+Prescaler (divide clock by 2–256).
+
+Timer enable/disable via register.
+
+Interrupt generation at end of PWM period (optional).
+
+Asynchronous active-low reset.
+
+Debug mode (halt counter when dbg_mode = 1).
+
+3. Block Diagram (mô tả text)
+
+APB → điều khiển đọc/ghi register.
+
+Register → chứa các thanh ghi: PERIOD, DUTY, CTRL, STATUS, PRESCALER.
+
+Control Counter → tạo cnt_en.
+
+Counter → đếm từ 0 → PERIOD, sau đó reset về 0.
+
+Comparator → so sánh counter với DUTY để sinh pwm_out.
+
+Interrupt → báo khi counter = PERIOD (end of cycle).
+
+Top module → tích hợp tất cả.
+
+4. Register Map (example)
+Address	Name	Description
+0x000	CTRL	[0] enable, [1] prescaler enable, [11:8] prescaler value
+0x004	PERIOD	PWM period value
+0x008	DUTY	PWM duty cycle value
+0x00C	STATUS	[0] interrupt flag
+0x010	INT_EN	[0] enable interrupt
+0x014	CLEAR	write 1 to clear interrupt
+5. Operation
+
+CPU writes PERIOD and DUTY.
+
+Counter increments each cnt_en cycle.
+
+When counter < DUTY → pwm_out = 1, else pwm_out = 0.
+
+When counter == PERIOD → counter resets to 0 and optional interrupt triggers.
