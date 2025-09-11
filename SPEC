@@ -1,0 +1,262 @@
+Design and Implementation of a PWM IP Core (Pulse Width Modulation Intellectual Property) on FPGA
+📌 Bản tóm tắt tính năng
+
+Đề tài xây dựng một PWM IP core có thể cấu hình được qua APB bus, hỗ trợ:
+
+Độ phân giải 16-bit cho tín hiệu PWM.
+
+Prescaler điều chỉnh tần số PWM từ clock hệ thống.
+
+So sánh duty cycle để điều khiển xung ra.
+
+Cấu hình thông qua thanh ghi (Register Map):
+
+Thiết lập duty cycle.
+
+Bật/tắt PWM.
+
+Điều chỉnh prescaler.
+
+Đọc trạng thái hoạt động.
+
+Ngắt (Interrupt) khi duty đạt ngưỡng (tùy chọn).
+
+Có thể mở rộng để hỗ trợ multi-channel PWM.
+
+📌 Kiến trúc tổng thể
+
+PWM IP core được thiết kế từ các khối sau:
+
+APB Interface
+
+Vai trò: Giao tiếp giữa CPU/SoC và IP Core.
+
+Chuyển lệnh ghi/đọc từ bus APB vào thanh ghi điều khiển.
+
+Register Block
+
+Vai trò: Lưu trữ các giá trị cấu hình từ CPU (duty, prescaler, enable, interrupt enable, status...).
+
+Xuất tín hiệu điều khiển sang các khối con khác.
+
+Prescaler
+
+Vai trò: Chia clock hệ thống thành xung clock chậm hơn để tạo tần số PWM phù hợp.
+
+Counter
+
+Vai trò: Bộ đếm 16-bit chạy theo xung từ prescaler.
+
+Cung cấp giá trị hiện tại để so sánh với duty.
+
+Comparator
+
+Vai trò: So sánh giá trị counter với giá trị duty.
+
+Xuất tín hiệu PWM_out (1 khi counter < duty, 0 khi counter ≥ duty).
+
+Control Logic
+
+Vai trò:
+
+Quản lý bật/tắt PWM.
+
+Kích hoạt interrupt khi duty đạt ngưỡng (nếu bật).
+
+Reset counter khi cần.
+
+Interrupt Block (tuỳ chọn)
+
+Vai trò: Sinh tín hiệu ngắt về CPU khi PWM đạt điều kiện cấu hình.
+
+PWM Top (PWM_top)
+
+Vai trò: Tích hợp toàn bộ các khối trên vào một kiến trúc hoàn chỉnh.
+
+Xuất ra tín hiệu PWM_out.
+
+📌 Register Map cho PWM IP Core
+Địa chỉ (Offset)	Tên thanh ghi	Kiểu	Mô tả
+0x00	CONTROL	R/W	Thanh ghi điều khiển chung
+0x04	STATUS	R	Thanh ghi trạng thái
+0x08	DUTY_CYCLE	R/W	Cấu hình giá trị duty cycle (16-bit)
+0x0C	PRESCALER	R/W	Giá trị chia clock (16-bit)
+0x10	INT_ENABLE	R/W	Cho phép/bật tắt interrupt
+0x14	INT_STATUS	R/W1C	Trạng thái interrupt (ghi 1 để xóa cờ)
+📌 Chi tiết từng thanh ghi
+1. CONTROL (0x00)
+Bit	Tên	Kiểu	Mô tả
+[0]	PWM_EN	R/W	1 = bật PWM, 0 = tắt PWM
+[1]	CNT_RESET	W	1 = reset counter về 0
+[2]	INT_CLR	W	Xóa cờ interrupt thủ công
+[31:3]	RSV	-	Dành cho mở rộng
+2. STATUS (0x04)
+Bit	Tên	Kiểu	Mô tả
+[0]	PWM_ACTIVE	R	Cho biết PWM đang chạy
+[1]	CNT_ZERO	R	Cho biết counter đang ở 0
+[2]	DUTY_MATCH	R	Counter == DUTY
+[31:3]	RSV	-	Dành cho mở rộng
+3. DUTY_CYCLE (0x08)
+Bit	Tên	Kiểu	Mô tả
+[15:0]	DUTY_VAL	R/W	Giá trị duty cycle (so với counter)
+[31:16]	RSV	-	Không dùng
+4. PRESCALER (0x0C)
+Bit	Tên	Kiểu	Mô tả
+[15:0]	PRESC_VAL	R/W	Giá trị chia clock (N+1)
+[31:16]	RSV	-	Không dùng
+5. INT_ENABLE (0x10)
+Bit	Tên	Kiểu	Mô tả
+[0]	INT_EN	R/W	Cho phép interrupt
+[1]	DUTY_MATCH_IE	R/W	Ngắt khi counter == DUTY
+[2]	CNT_ZERO_IE	R/W	Ngắt khi counter = 0
+[31:3]	RSV	-	Không dùng
+6. INT_STATUS (0x14)
+Bit	Tên	Kiểu	Mô tả
+[0]	INT_FLAG	R/W1C	1 = có ngắt, ghi 1 để xóa
+[1]	DUTY_MATCH_IF	R/W1C	1 = counter == DUTY, ghi 1 để xóa
+[2]	CNT_ZERO_IF	R/W1C	1 = counter = 0, ghi 1 để xóa
+[31:3]	RSV	-	Không dùng
+📌 Luồng hoạt động
+
+CPU ghi vào PRESCALER để chọn tần số PWM.
+
+CPU ghi vào DUTY_CYCLE để chọn độ rộng xung.
+
+CPU bật PWM_EN trong thanh ghi CONTROL để chạy PWM.
+
+Counter sẽ chạy → Comparator so sánh với DUTY → xuất PWM_OUT.
+
+Nếu bật interrupt → khi counter = 0 hoặc counter = DUTY sẽ sinh ngắt.
+
+
+# Block diagram — PWM IP Core (16-bit)
+
+Dưới đây là **block diagram** dạng ASCII + mô tả tín hiệu để bạn có thể chèn thẳng vào báo cáo hoặc dùng làm hướng dẫn triển khai RTL.
+
+```
+                                +----------------------+
+                                |       APB BUS        |
+                                | psel, penable, pwrite|
+                                | paddr[11:0], pwdata  |
+                                | prdata[31:0], pready |
+                                +----------+-----------+
+                                           |
+                                           v
+                                +----------------------+
+                                |      APB IF /        |
+                                |    WR_EN, RD_EN      |
+                                +----------+-----------+
+                                           |
+                                           v
+                                +----------------------+
+                                |      REGISTER        |
+                                | (CONTROL / STATUS /  |
+                                |  DUTY / PRESCALER /  |
+                                |  INT_ENABLE / INT_ST)|
+                                +--+---+----+---+---+--+
+             CONTROL signals / |      |    |   |    |   |
+             register outputs  |      |    |   |    |   |
+                              v       v    v   v    v   v
+                       +--------+  +------+ +-----+  +--------+
+                       | Pres-  |  |Counter| |Comp.|  |Interrupt|
+                       | caler  |  |(16-bit)| |(per |  |  Block |
+                       | (div)  |  | period | |chanel)|  |(flags)|
+                       +---+----+  +---+---+ +--+--+  +----+---+
+                           |           |        |          |
+                           | slow_clk  |count   | pwm_out  |
+                           |           |value   | (per ch) |
+                           v           v        v          v
+                        (clock)     counter  comparator  INT -> CPU
+                                     value     decision
+                                          \      /
+                                           \    /
+                                            \  /
+                                             \/
+                                         PWM_TOP
+                                         (aggregates)
+                                            |
+                                            +--> pwm_out[ch0]
+                                            +--> pwm_out[ch1]
+                                            +--> pwm_out[ch2]
+                                            +--> pwm_out[ch3]
+```
+
+---
+
+## Giải thích ngắn (mối liên hệ tín hiệu)
+
+* **APB IF**
+
+  * Nhận `psel, penable, pwrite, paddr, pwdata` từ bus.
+  * Sinh `wr_en`, `rd_en`, truyền tới `REGISTER`.
+  * Trả `prdata` ra APB.
+
+* **REGISTER**
+
+  * Thanh ghi: `CONTROL (PWM_EN, CNT_RESET, MODE)`, `STATUS`, `DUTY_CHx`, `PRESCALER`, `INT_ENABLE`, `INT_STATUS`.
+  * Xuất các tín hiệu điều khiển: `pwm_en`, `cnt_reset`, `mode`, `prescaler_val`, `duty_ch[x]`, `int_enable_*`.
+
+* **PRESCALER**
+
+  * Nhận `clk` hệ thống và `prescaler_val` → xuất `slow_clk` (xung cho Counter).
+  * Nếu prescaler = 0 → slow\_clk = clk (hoặc xử lý tùy thiết kế).
+
+* **COUNTER (16-bit)**
+
+  * Đếm theo `slow_clk`.
+  * Mode: up (0 → period) hoặc up-down (center-aligned) nếu mode bật.
+  * Dừng hoặc reset khi `pwm_en = 0` hoặc `cnt_reset = 1`.
+  * Xuất `counter_value[15:0]` tới Comparator và STATUS.
+
+* **COMPARATOR (per channel)**
+
+  * Mỗi kênh: so sánh `counter_value` với `duty_ch[i]`.
+  * Nếu `counter < duty` → `pwm_out = 1`, ngược lại 0.
+  * Hỗ trợ thêm tính năng inverted/phase-shift nếu muốn mở rộng.
+
+* **INTERRUPT BLOCK**
+
+  * Sinh cờ khi `counter == 0` (end of period) hoặc `counter == duty` (duty match) nếu tương ứng bit `INT_ENABLE` bật.
+  * Ghi vào `INT_STATUS`; CPU có thể clear bằng write-1 (W1C) hoặc bằng `CONTROL.INT_CLR`.
+
+* **PWM\_TOP**
+
+  * Tập hợp tất cả, xuất nhiều `pwm_out[ch]` ra chân FPGA/SoC.
+
+---
+
+## Top-level I/O gợi ý cho RTL (tên tín hiệu)
+
+* Inputs:
+
+  * `sys_clk`, `sys_rst_n`
+  * `psel`, `pwrite`, `penable`
+  * `paddr[11:0]`, `pwdata[31:0]`
+* Outputs:
+
+  * `prdata[31:0]`, `pready`, `pslverr` (APB)
+  * `pwm_out[N-1:0]` (N = số kênh, ví dụ 4)
+  * `irq` (tín hiệu ngắt ra SoC)
+
+---
+
+## Gợi ý mapping register → module
+
+* `CONTROL` → output `pwm_en`, `mode`, `cnt_reset` → Counter / Control Logic
+* `PRESCALER` → input `prescaler_val` → Prescaler
+* `DUTY_CHx` → `duty_ch[x]` → Comparator x
+* `INT_ENABLE` → `int_enable_*` → Interrupt Block
+* `INT_STATUS` / `STATUS` → inputs read từ Interrupt / Counter / Comparator
+
+---
+
+## Kiểm thử (testbench) — checklist ngắn
+
+1. Reset toàn bộ, đọc register default.
+2. Ghi `prescaler`, `period`, `duty` và bật `PWM_EN`.
+3. Quan sát `pwm_out`: duty ratio = duty/period.
+4. Test `cnt_reset` — counter trở về 0.
+5. Test interrupt: bật `INT_ENABLE`, kiểm tra cờ INT\_STATUS khi counter==0 và counter==duty.
+6. Test multi-channel: các kênh có duty khác nhau tạo ra wave khác nhau.
+7. Mode center-aligned (nếu có): kiểm tra shape xung.
+
