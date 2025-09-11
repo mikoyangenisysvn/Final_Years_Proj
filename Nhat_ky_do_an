@@ -135,3 +135,106 @@ Counter increments each cnt_en cycle.
 When counter < DUTY → pwm_out = 1, else pwm_out = 0.
 
 When counter == PERIOD → counter resets to 0 and optional interrupt triggers.
+=============================================================================================================================
+
+Day 3rd 11/9/2025: No more twin day
++ Bổ sung và chỉnh sửa spec:
+Thiết kế IP Core PWM 16-bit trên FPGA
+🔑 Tóm tắt tính năng
+
+Giao tiếp chuẩn APB: Cho phép CPU hoặc SoC cấu hình thông qua bus AMBA APB.
+
+Độ phân giải 16-bit: Counter, PERIOD và DUTY_CYCLE đều 16-bit.
+
+Điều chỉnh linh hoạt:
+
+Thanh ghi PERIOD xác định độ dài chu kỳ.
+
+Thanh ghi DUTY_CYCLE xác định độ rộng xung (tỉ lệ phần trăm duty).
+
+Hỗ trợ duty từ 0% → 100%.
+
+Prescaler: Giảm tần số clock đầu vào để tạo PWM tần số thấp.
+
+Ngắt (Interrupt):
+
+Ngắt khi Counter reset (cuối chu kỳ).
+
+Ngắt khi Counter đạt DUTY_CYCLE.
+
+Đa kênh PWM: Hỗ trợ nhiều kênh PWM độc lập (ví dụ 4 kênh).
+
+Chế độ hoạt động:
+
+Edge-aligned PWM (đếm lên).
+
+Center-aligned PWM (đếm lên–xuống).
+
+Ứng dụng: Điều khiển tốc độ động cơ DC, servo, LED dimming, DAC số.
+
+🏗️ Kiến trúc hệ thống
+1. PWM_TOP
+
+Khối tích hợp toàn bộ IP.
+
+Kết nối trực tiếp với APB bus.
+
+Quản lý các module con: Register, Counter, Comparator, Prescaler, Interrupt.
+
+Xuất tín hiệu PWM_OUT cho từng kênh.
+
+2. APB Interface
+
+Xử lý các tín hiệu APB (psel, penable, pwrite, paddr, pwdata, prdata).
+
+Sinh ra tín hiệu điều khiển wr_en, rd_en cho Register.
+
+3. Register Block
+
+Lưu trữ các thanh ghi cấu hình:
+
+PERIOD (16-bit)
+
+DUTY_CYCLE_CHx (16-bit, cho từng kênh)
+
+CONTROL (Enable, Mode, Prescaler select)
+
+STATUS (Cờ trạng thái, ngắt)
+
+Cầu nối giữa phần mềm (CPU) và phần cứng (Counter, Comparator).
+
+4. Prescaler
+
+Giảm tần số xung clock đầu vào.
+
+Cho phép PWM hoạt động ở nhiều dải tần số khác nhau.
+
+Cấu hình thông qua thanh ghi CONTROL.
+
+5. Counter
+
+Counter 16-bit, có thể hoạt động ở 2 chế độ:
+
+Up counter: đếm từ 0 → PERIOD rồi reset.
+
+Up-Down counter: đếm lên → PERIOD, sau đó đếm xuống → 0.
+
+Cung cấp giá trị counter_value cho Comparator.
+
+6. Comparator
+
+So sánh counter_value với DUTY_CYCLE.
+
+Nếu counter < duty_cycle → pwm_out = 1, ngược lại pwm_out = 0.
+
+Hỗ trợ nhiều kênh, mỗi kênh có comparator riêng.
+
+7. Interrupt Block
+
+Sinh tín hiệu ngắt khi:
+
+Counter reset về 0 (cuối chu kỳ).
+
+Counter == DUTY_CYCLE.
+
+Cho phép CPU dễ dàng đồng bộ hoặc giám sát tín hiệu PWM.
