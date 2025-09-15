@@ -238,3 +238,7 @@ Counter reset về 0 (cuối chu kỳ).
 Counter == DUTY_CYCLE.
 
 Cho phép CPU dễ dàng đồng bộ hoặc giám sát tín hiệu PWM.
+===========================================================================================================================
+Day 4th 15/09/2025: After sickness
+Bổ sung kiến thức về deadtime, làm một số bài tập liên quan đến PWM để củng cố kiến thức.
+Thử nghiệm PWM với servo.
