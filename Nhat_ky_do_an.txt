@@ -247,3 +247,6 @@ Day 5th 17/09/2025: Forgoten day
 Quên ghi ngày 16 nên coi như 17 là day 5th
 học sử dụng tang nano 9k
 cho đèn nhấp nháy: dự định cho sáng mờ dần và sáng dần như kiểu breathing nhưng mà dường như là 9k không làm được
+===========================================================================================================================
+Day 6th 22/09/2025: Midnight memory is somekind of nightmare
+Hoàn thành vẽ block diagram theo spec
