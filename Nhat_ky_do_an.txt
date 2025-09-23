@@ -250,3 +250,6 @@ cho đèn nhấp nháy: dự định cho sáng mờ dần và sáng dần như k
 ===========================================================================================================================
 Day 6th 22/09/2025: Midnight memory is somekind of nightmare
 Hoàn thành vẽ block diagram theo spec
+========================================================================================================================
+Day 7th 23/09/2025: Hurricane incoming!
+Lo hoàn thành thủ tục đăng kí đồ án, thủ tục trông vẻ rườm rà và khó đoán
