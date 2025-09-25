@@ -193,7 +193,7 @@ Dưới đây là **block diagram** dạng ASCII + mô tả tín hiệu để b�
 
 * **REGISTER**
 
-  * Thanh ghi: `CONTROL (PWM_EN, CNT_RESET, MODE)`, `STATUS`, `DUTY_CHx`, `PRESCALER`, `INT_ENABLE`, `INT_STATUS`.
+  * Thanh ghi: `CONTROL (PWM_EN, CNT_RESET, //MODE)`, `STATUS`, `DUTY_CHx`, `PRESCALER`, `INT_ENABLE`, `INT_STATUS`.
   * Xuất các tín hiệu điều khiển: `pwm_en`, `cnt_reset`, `mode`, `prescaler_val`, `duty_ch[x]`, `int_enable_*`.
 
 * **PRESCALER**
@@ -204,7 +204,7 @@ Dưới đây là **block diagram** dạng ASCII + mô tả tín hiệu để b�
 * **COUNTER (16-bit)**
 
   * Đếm theo `slow_clk`.
-  * Mode: up (0 → period) hoặc up-down (center-aligned) nếu mode bật.
+  //* Mode: up (0 → period) hoặc up-down (center-aligned) nếu mode bật.
   * Dừng hoặc reset khi `pwm_en = 0` hoặc `cnt_reset = 1`.
   * Xuất `counter_value[15:0]` tới Comparator và STATUS.
 
