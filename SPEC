@@ -45,7 +45,7 @@ Vai trò: Chia clock hệ thống thành xung clock chậm hơn để tạo tầ
 
 Counter
 
-Vai trò: Bộ đếm 16-bit chạy theo xung từ prescaler.
+Vai trò: Bộ đếm 64-bit chạy theo xung từ prescaler.
 
 Cung cấp giá trị hiện tại để so sánh với duty.
 
@@ -201,7 +201,7 @@ Dưới đây là **block diagram** dạng ASCII + mô tả tín hiệu để b�
   * Nhận `clk` hệ thống và `prescaler_val` → xuất `slow_clk` (xung cho Counter).
   * Nếu prescaler = 0 → slow\_clk = clk (hoặc xử lý tùy thiết kế).
 
-* **COUNTER (16-bit)**
+* **COUNTER (64-bit)**
 
   * Đếm theo `slow_clk`.
   //* Mode: up (0 → period) hoặc up-down (center-aligned) nếu mode bật.
