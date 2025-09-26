@@ -253,3 +253,9 @@ Hoàn thành vẽ block diagram theo spec
 ========================================================================================================================
 Day 7th 23/09/2025: Hurricane incoming!
 Lo hoàn thành thủ tục đăng kí đồ án, thủ tục trông vẻ rườm rà và khó đoán
+=======================================================================================================================
+Day 8th 26/09/2025: 1yrs streak of warthunder!
+bắt đầu với bộ đếm counter
+theo spec cũ bộ đếm có 16bit, sửa lại thành 64bit
+có 2 chế độ đếm: up và up down
+chat gpt có gợi ý về việc lấy 16bit đi so sánh, chưa hiểu nghĩa là sao?
