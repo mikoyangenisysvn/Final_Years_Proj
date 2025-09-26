@@ -75,46 +75,49 @@ Vai trò: Tích hợp toàn bộ các khối trên vào một kiến trúc hoàn
 
 Xuất ra tín hiệu PWM_out.
 
-📌 Register Map cho PWM IP Core
+📌 Register Map (Multi-channel PWM – 4 kênh)
 Địa chỉ (Offset)	Tên thanh ghi	Kiểu	Mô tả
 0x00	CONTROL	R/W	Thanh ghi điều khiển chung
-0x04	STATUS	R	Thanh ghi trạng thái
-0x08	DUTY_CYCLE	R/W	Cấu hình giá trị duty cycle (16-bit)
-0x0C	PRESCALER	R/W	Giá trị chia clock (16-bit)
-0x10	INT_ENABLE	R/W	Cho phép/bật tắt interrupt
-0x14	INT_STATUS	R/W1C	Trạng thái interrupt (ghi 1 để xóa cờ)
-📌 Chi tiết từng thanh ghi
+0x04	STATUS	R	Trạng thái hoạt động
+0x08	PRESCALER	R/W	Giá trị chia clock (16-bit)
+0x0C	DUTY_CH0	R/W	Duty cycle kênh 0 (16-bit)
+0x10	DUTY_CH1	R/W	Duty cycle kênh 1 (16-bit)
+0x14	DUTY_CH2	R/W	Duty cycle kênh 2 (16-bit)
+0x18	DUTY_CH3	R/W	Duty cycle kênh 3 (16-bit)
+0x1C	INT_ENABLE	R/W	Cho phép ngắt
+0x20	INT_STATUS	R/W1C	Trạng thái ngắt
+📌 Chi tiết thanh ghi
 1. CONTROL (0x00)
 Bit	Tên	Kiểu	Mô tả
-[0]	PWM_EN	R/W	1 = bật PWM, 0 = tắt PWM
-[1]	CNT_RESET	W	1 = reset counter về 0
-[2]	INT_CLR	W	Xóa cờ interrupt thủ công
+[0]	PWM_EN	R/W	Bật/tắt toàn bộ PWM
+[1]	CNT_RESET	W	Reset counter về 0
+[2]	MODE	R/W	0 = up-count, 1 = up-down (center-aligned)
 [31:3]	RSV	-	Dành cho mở rộng
 2. STATUS (0x04)
 Bit	Tên	Kiểu	Mô tả
 [0]	PWM_ACTIVE	R	Cho biết PWM đang chạy
-[1]	CNT_ZERO	R	Cho biết counter đang ở 0
-[2]	DUTY_MATCH	R	Counter == DUTY
+[1]	CNT_ZERO	R	Counter = 0
+[2]	DUTY_MATCH	R	Counter = duty (bất kỳ kênh nào)
 [31:3]	RSV	-	Dành cho mở rộng
-3. DUTY_CYCLE (0x08)
-Bit	Tên	Kiểu	Mô tả
-[15:0]	DUTY_VAL	R/W	Giá trị duty cycle (so với counter)
-[31:16]	RSV	-	Không dùng
-4. PRESCALER (0x0C)
+3. PRESCALER (0x08)
 Bit	Tên	Kiểu	Mô tả
 [15:0]	PRESC_VAL	R/W	Giá trị chia clock (N+1)
 [31:16]	RSV	-	Không dùng
-5. INT_ENABLE (0x10)
+4. DUTY_CHx (0x0C → 0x18)
 Bit	Tên	Kiểu	Mô tả
-[0]	INT_EN	R/W	Cho phép interrupt
-[1]	DUTY_MATCH_IE	R/W	Ngắt khi counter == DUTY
+[15:0]	DUTY_VAL	R/W	Giá trị duty cycle kênh x
+[31:16]	RSV	-	Không dùng
+5. INT_ENABLE (0x1C)
+Bit	Tên	Kiểu	Mô tả
+[0]	INT_EN	R/W	Cho phép ngắt toàn cục
+[1]	DUTY_MATCH_IE	R/W	Ngắt khi counter = duty (bất kỳ kênh nào)
 [2]	CNT_ZERO_IE	R/W	Ngắt khi counter = 0
 [31:3]	RSV	-	Không dùng
-6. INT_STATUS (0x14)
+6. INT_STATUS (0x20)
 Bit	Tên	Kiểu	Mô tả
 [0]	INT_FLAG	R/W1C	1 = có ngắt, ghi 1 để xóa
-[1]	DUTY_MATCH_IF	R/W1C	1 = counter == DUTY, ghi 1 để xóa
-[2]	CNT_ZERO_IF	R/W1C	1 = counter = 0, ghi 1 để xóa
+[1]	DUTY_MATCH_IF	R/W1C	Counter = duty (bất kỳ kênh nào)
+[2]	CNT_ZERO_IF	R/W1C	Counter = 0
 [31:3]	RSV	-	Không dùng
 📌 Luồng hoạt động
 
