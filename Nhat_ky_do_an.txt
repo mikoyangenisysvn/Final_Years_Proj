@@ -259,3 +259,8 @@ bắt đầu với bộ đếm counter
 theo spec cũ bộ đếm có 16bit, sửa lại thành 64bit
 có 2 chế độ đếm: up và up down
 chat gpt có gợi ý về việc lấy 16bit đi so sánh, chưa hiểu nghĩa là sao?
+========================================================================================================================
+Day 9th 27/09/2025: Lazy sunday
+bổ sung thêm module prescaler
+đề xuất thay đổi các thanh ghi của register
+comparator làm 1 kênh trước
