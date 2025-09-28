@@ -1,43 +1,60 @@
-module register (
-    input  wire        clk,
-    input  wire        resetn,
-    input  wire        psel,
-    input  wire        penable,
-    input  wire        pwrite,
-    input  wire [7:0]  paddr,
-    input  wire [31:0] pwdata,
-    output reg  [31:0] prdata,
+module pwm_register #(
+    parameter WIDTH = 16
+)(
+    input  wire              clk,
+    input  wire              rst,
 
-    // output to other modules
-    output reg  [15:0] duty_cycle,
-    output reg  [15:0] period
+    // giao diện ghi/đọc (giả lập memory-mapped)
+    input  wire              wr_en,       // write enable
+    input  wire              rd_en,       // read enable
+    input  wire [3:0]        addr,        // địa chỉ thanh ghi
+    input  wire [WIDTH-1:0]  wr_data,     // dữ liệu ghi
+    output reg  [WIDTH-1:0]  rd_data,     // dữ liệu đọc
+
+    // output sang khối PWM
+    output reg               en,
+    output reg               mode,
+    output reg  [WIDTH-1:0]  period,
+    output reg  [WIDTH-1:0]  duty,
+    output reg  [WIDTH-1:0]  prescaler_div
 );
 
-    // Register map
-    // 0x00 : DUTY_CYCLE
-    // 0x04 : PERIOD
-    // 0x08 : RESERVED (có thể giữ cho control nếu muốn)
-    // 0x0C : RESERVED (status/intr nếu cần)
-
-    always @(posedge clk or negedge resetn) begin
-        if (!resetn) begin
-            duty_cycle <= 16'd0;
-            period     <= 16'd65535; // mặc định max 16-bit
-        end else if (psel && penable && pwrite) begin
-            case (paddr[7:0])
-                8'h00: duty_cycle <= pwdata[15:0];
-                8'h04: period     <= pwdata[15:0];
-                default: ;
+    // ghi register
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            en            <= 1'b0;
+            mode          <= 1'b0;
+            period        <= {WIDTH{1'b0}};
+            duty          <= {WIDTH{1'b0}};
+            prescaler_div <= {WIDTH{1'b0}};
+        end 
+        else if (wr_en) begin
+            case (addr)
+                4'h0: begin
+                    en   <= wr_data[0];
+                    mode <= wr_data[1];
+                end
+                4'h4: period        <= wr_data;
+                4'h8: duty          <= wr_data;
+                4'hC: prescaler_div <= wr_data;
             endcase
         end
     end
 
+    // đọc register
     always @(*) begin
-        case (paddr[7:0])
-            8'h00: prdata = {16'd0, duty_cycle};
-            8'h04: prdata = {16'd0, period};
-            default: prdata = 32'd0;
-        endcase
+        if (rd_en) begin
+            case (addr)
+                4'h0: rd_data = { {WIDTH-2{1'b0}}, mode, en };
+                4'h4: rd_data = period;
+                4'h8: rd_data = duty;
+                4'hC: rd_data = prescaler_div;
+                default: rd_data = {WIDTH{1'b0}};
+            endcase
+        end 
+        else begin
+            rd_data = {WIDTH{1'b0}};
+        end
     end
 
 endmodule
