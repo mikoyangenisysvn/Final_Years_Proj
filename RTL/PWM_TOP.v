@@ -1,77 +1,66 @@
 module pwm_top #(
     parameter WIDTH = 16
 )(
-    input  wire             clk,       // clock hệ thống (nhanh)
-    input  wire             rst_n,     // reset toàn cục, active low
-
-    // giao diện ghi/đọc thanh ghi
-    input  wire             wr_en,
-    input  wire             rd_en,
-    input  wire [3:0]       addr,
-    input  wire [WIDTH-1:0] wr_data,
-    output wire [WIDTH-1:0] rd_data,
-
-    // output PWM
-    output wire             pwm_out
+    input  wire                 clk,
+    input  wire                 rst_n,
+    input  wire                 CEN,         // Counter Enable
+    input  wire [WIDTH-1:0]     ARR,         // Auto-Reload Register (Period)
+    input  wire [WIDTH-1:0]     CCR1,        // Capture/Compare Register (Duty)
+    input  wire [WIDTH-1:0]     PSC,         // Prescaler
+    output reg                  PWM_OUT      // PWM Output
 );
 
-    // --- Wire kết nối ---
-    wire              en;
-    wire              mode;
-    wire [WIDTH-1:0]  period;
-    wire [WIDTH-1:0]  duty;
-    wire [WIDTH-1:0]  prescaler_div;
+    // Prescaler
+    reg [WIDTH-1:0] psc_cnt;
+    reg             tick;
 
-    wire              slow_clk;
-    wire [WIDTH-1:0]  cnt_val;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            psc_cnt <= 0;
+            tick    <= 0;
+        end else if (CEN) begin
+            if (psc_cnt >= PSC) begin
+                psc_cnt <= 0;
+                tick    <= 1;   // Tạo tick cho CNT
+            end else begin
+                psc_cnt <= psc_cnt + 1;
+                tick    <= 0;
+            end
+        end else begin
+            tick <= 0;
+        end
+    end
 
-    // --- Instance register block ---
-    pwm_register #(
-        .WIDTH(WIDTH)
-    ) u_reg (
-        .clk(clk),
-        .rst(~rst_n),   // vì register bạn để reset active high
-        .wr_en(wr_en),
-        .rd_en(rd_en),
-        .addr(addr),
-        .wr_data(wr_data),
-        .rd_data(rd_data),
-        .en(en),
-        .mode(mode),
-        .period(period),
-        .duty(duty),
-        .prescaler_div(prescaler_div)
-    );
+    // Counter (CNT)
+    reg [WIDTH-1:0] CNT;
 
-    // --- Instance prescaler ---
-    prescaler u_prescaler (
-        .clk(clk),
-        .rst_n(rst_n),
-        .div(prescaler_div[15:0]), // lấy 16 bit thấp
-        .slow_clk(slow_clk)
-    );
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            CNT <= 0;
+        end else if (CEN && tick) begin
+            if (CNT >= ARR)
+                CNT <= 0;
+            else
+                CNT <= CNT + 1;
+        end
+    end
 
-    // --- Instance counter ---
-    counter #(
-        .WIDTH(WIDTH)
-    ) u_counter (
-        .clk(slow_clk),
-        .rst_n(rst_n),    // module counter bạn viết là active high -> cần sửa nếu muốn đồng bộ
-        .PWM_EN(en),
-        .mode(mode),
-        .AAR(period),
-        .cnt_val(cnt_val)
-    );
-
-    // --- Instance comparator ---
-    comparator #(
-        .WIDTH(WIDTH)
-    ) u_comparator (
-        .CCR(cnt_val),
-        .CCR_COMPARE(duty),
-        .period(period),
-        .enable(en),
-        .pwm_out(pwm_out)
-    );
+    // PWM Logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            PWM_OUT <= 1'b0;
+        end else if (CEN) begin
+            if (CCR1 == 0)
+                PWM_OUT <= 1'b0;               // Duty = 0% → luôn tắt
+            else if (CCR1 >= ARR)
+                PWM_OUT <= 1'b1;               // Duty = full → luôn bật
+            else if (CNT < CCR1)
+                PWM_OUT <= 1'b1;               // So sánh CNT với CCR1
+            else
+                PWM_OUT <= 1'b0;
+        end else begin
+            PWM_OUT <= 1'b0;                   // Disable → tắt PWM
+        end
+    end
 
 endmodule
