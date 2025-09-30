@@ -1,32 +1,26 @@
-module prescaler_tick #(
-    parameter WIDTH = 16,
-    parameter DIV   = 1000
-)(
-    input  wire clk_in,
-    input  wire rst,
-    input  wire en,
-    output reg  tick   // tick = 1 trong 1 chu kỳ clock_in
+module prescaler (
+    input  wire       clk,      // clock gốc (nhanh)
+    input  wire       rst_n,    // reset bất đồng bộ, active low
+    input  wire [15:0] div,     // hệ số chia clock (từ register)
+    output reg        slow_clk  // clock sau khi chia
 );
 
-    reg [WIDTH-1:0] cnt;
+    reg [15:0] count;
 
-    always @(posedge clk_in or posedge rst) begin
-        if (rst) begin
-            cnt  <= 0;
-            tick <= 0;
-        end 
-        else if (en) begin
-            if (cnt == DIV-1) begin
-                cnt  <= 0;
-                tick <= 1;
-            end
-            else begin
-                cnt  <= cnt + 1;
-                tick <= 0;
-            end
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            count    <= 16'd0;
+            slow_clk <= 1'b0;
         end
         else begin
-            tick <= 0;
+            if (count >= div) begin
+                count    <= 16'd0;
+                slow_clk <= ~slow_clk;
+            end
+            else begin
+                count <= count + 1'b1;
+            end
         end
     end
+
 endmodule
