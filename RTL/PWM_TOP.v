@@ -1,37 +1,36 @@
-module pwm_top_with_reg #(
-    parameter WIDTH       = 16,
-    parameter PRESC_WIDTH = 16
+module pwm_top #(
+    parameter WIDTH = 16
 )(
-    input  wire              clk,
-    input  wire              rst_n,
+    input  wire             clk,       // clock hệ thống (nhanh)
+    input  wire             rst_n,     // reset toàn cục, active low
 
-    // giao diện bus tới register
-    input  wire              wr_en,
-    input  wire              rd_en,
-    input  wire [3:0]        addr,
-    input  wire [WIDTH-1:0]  wr_data,
-    output wire [WIDTH-1:0]  rd_data,
+    // giao diện ghi/đọc thanh ghi
+    input  wire             wr_en,
+    input  wire             rd_en,
+    input  wire [3:0]       addr,
+    input  wire [WIDTH-1:0] wr_data,
+    output wire [WIDTH-1:0] rd_data,
 
     // output PWM
-    output wire              pwm_out
+    output wire             pwm_out
 );
 
-    // kết nối nội bộ
+    // --- Wire kết nối ---
     wire              en;
     wire              mode;
-    wire [WIDTH-1:0]  ARR;
-    wire [WIDTH-1:0]  CCR;
+    wire [WIDTH-1:0]  period;
+    wire [WIDTH-1:0]  duty;
     wire [WIDTH-1:0]  prescaler_div;
 
-    wire tick;
-    wire [WIDTH-1:0] counter_value;
+    wire              slow_clk;
+    wire [WIDTH-1:0]  cnt_val;
 
-    // Register block
+    // --- Instance register block ---
     pwm_register #(
         .WIDTH(WIDTH)
-    ) u_register (
+    ) u_reg (
         .clk(clk),
-        .rst(rst),
+        .rst(~rst_n),   // vì register bạn để reset active high
         .wr_en(wr_en),
         .rd_en(rd_en),
         .addr(addr),
@@ -44,34 +43,33 @@ module pwm_top_with_reg #(
         .prescaler_div(prescaler_div)
     );
 
-    // Prescaler
-    prescaler_tick #(
-        .WIDTH(PRESC_WIDTH)
-    ) u_prescaler (
-        .clk_in(clk),
-        .rst(rst),
-        .en(en),
-        .tick(tick)
+    // --- Instance prescaler ---
+    prescaler u_prescaler (
+        .clk(clk),
+        .rst_n(rst_n),
+        .div(prescaler_div[15:0]), // lấy 16 bit thấp
+        .slow_clk(slow_clk)
     );
 
-    // Counter
+    // --- Instance counter ---
     counter #(
         .WIDTH(WIDTH)
     ) u_counter (
-        .clk(tick),
-        .cnt_rst(rst),
+        .clk(slow_clk),
+        .rst_n(rst_n),    // module counter bạn viết là active high -> cần sửa nếu muốn đồng bộ
         .PWM_EN(en),
         .mode(mode),
-        .period(period),
-        .cnt_val(counter_value)
+        .AAR(period),
+        .cnt_val(cnt_val)
     );
 
-    // Comparator
+    // --- Instance comparator ---
     comparator #(
         .WIDTH(WIDTH)
     ) u_comparator (
-        .counter_value(counter_value),
-        .duty(duty),
+        .CCR(cnt_val),
+        .CCR_COMPARE(duty),
+        .period(period),
         .enable(en),
         .pwm_out(pwm_out)
     );
