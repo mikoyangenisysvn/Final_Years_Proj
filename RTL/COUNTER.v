@@ -5,7 +5,7 @@ module counter #(
   input  wire              rst_n,    // reset active high
   input  wire              PWM_EN,     // enable
   input  wire              mode,       // 0: up, 1: up-down
-  input  wire [WIDTH-1:0]  CCR,     // giá trị chu kỳ
+  input  wire [WIDTH-1:0]  AAR,     // giá trị chu kỳ
   output reg  [WIDTH-1:0]  cnt_val     // giá trị counter
 );
 
