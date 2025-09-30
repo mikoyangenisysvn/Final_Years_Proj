@@ -1,18 +1,18 @@
 module counter #(
   parameter WIDTH = 64
 )(
-  input  wire              clk,        // slow_clk
-  input  wire              rst_n,    // reset active high
-  input  wire              PWM_EN,     // enable
-  input  wire              mode,       // 0: up, 1: up-down
-  input  wire [WIDTH-1:0]  AAR,     // giá trị chu kỳ
-  output reg  [WIDTH-1:0]  cnt_val     // giá trị counter
+  input  wire              clk,       // slow_clk
+  input  wire              rst_n,     // reset active low
+  input  wire              PWM_EN,    // enable
+  input  wire              mode,      // 0: up, 1: up-down
+  input  wire [WIDTH-1:0]  AAR,       // giá trị chu kỳ
+  output reg  [WIDTH-1:0]  cnt_val    // giá trị counter
 );
 
   reg dir; // 0 = up, 1 = down (chỉ dùng khi mode=1)
 
-  always @(posedge clk or posedge cnt_rst) begin
-    if (cnt_rst) begin
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
       cnt_val <= {WIDTH{1'b0}};
       dir     <= 1'b0;
     end 
@@ -23,7 +23,7 @@ module counter #(
     else begin
       if (mode == 1'b0) begin
         // --------- UP MODE ---------
-        if (cnt_val >= period)
+        if (cnt_val >= AAR)
           cnt_val <= {WIDTH{1'b0}};
         else
           cnt_val <= cnt_val + 1;
@@ -32,7 +32,7 @@ module counter #(
         // --------- UP-DOWN MODE ---------
         if (dir == 1'b0) begin
           // đang đếm lên
-          if (cnt_val >= period) begin
+          if (cnt_val >= AAR) begin
             dir     <= 1'b1;        // đổi chiều
             cnt_val <= cnt_val - 1; // quay xuống
           end
