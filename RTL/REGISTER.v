@@ -2,14 +2,14 @@ module pwm_register #(
     parameter WIDTH = 16
 )(
     input  wire              clk,
-    input  wire              rst,
+    input  wire              rst_n,        // reset active low
 
     // giao diện ghi/đọc (giả lập memory-mapped)
-    input  wire              wr_en,       // write enable
-    input  wire              rd_en,       // read enable
-    input  wire [3:0]        addr,        // địa chỉ thanh ghi
-    input  wire [WIDTH-1:0]  wr_data,     // dữ liệu ghi
-    output reg  [WIDTH-1:0]  rd_data,     // dữ liệu đọc
+    input  wire              wr_en,        // write enable
+    input  wire              rd_en,        // read enable
+    input  wire [3:0]        addr,         // địa chỉ thanh ghi
+    input  wire [WIDTH-1:0]  wr_data,      // dữ liệu ghi
+    output reg  [WIDTH-1:0]  rd_data,      // dữ liệu đọc
 
     // output sang khối PWM
     output reg               en,
@@ -20,8 +20,8 @@ module pwm_register #(
 );
 
     // ghi register
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             en            <= 1'b0;
             mode          <= 1'b0;
             period        <= {WIDTH{1'b0}};
