@@ -264,3 +264,9 @@ Day 9th 27/09/2025: Lazy sunday
 bổ sung thêm module prescaler
 đề xuất thay đổi các thanh ghi của register
 comparator làm 1 kênh trước
+========================================================================================================================
+Day 10th 2/10/2025: Bad interview!
+có 1 bộ gần như đầy đủ 
+chuẩn bị kiểm thử
+đã được cấp i2c để thử
+nạp lên fpga 9k để test, nếu ko được xây dựng lại từ đầu
