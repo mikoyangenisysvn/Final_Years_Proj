@@ -2,20 +2,21 @@ module pwm_register #(
     parameter WIDTH = 16
 )(
     input  wire              clk,
-    input  wire              rst_n,        // reset active low
+    input  wire              rst_n,
 
-    // giao diện ghi/đọc (giả lập memory-mapped)
-    input  wire              wr_en,        // write enable
-    input  wire              rd_en,        // read enable
-    input  wire [3:0]        addr,         // địa chỉ thanh ghi
-    input  wire [WIDTH-1:0]  wr_data,      // dữ liệu ghi
-    output reg  [WIDTH-1:0]  rd_data,      // dữ liệu đọc
+    // giao diện ghi/đọc
+    input  wire              wr_en,
+    input  wire              rd_en,
+    input  wire [3:0]        addr,
+    input  wire [WIDTH-1:0]  wr_data,
+    output reg  [WIDTH-1:0]  rd_data,
 
-    // output sang khối PWM
+    // output sang PWM core
     output reg               en,
     output reg               mode,
     output reg  [WIDTH-1:0]  period,
-    output reg  [WIDTH-1:0]  duty,
+    output reg  [WIDTH-1:0]  duty1,
+    output reg  [WIDTH-1:0]  duty2,
     output reg  [WIDTH-1:0]  prescaler_div
 );
 
@@ -24,9 +25,10 @@ module pwm_register #(
         if (!rst_n) begin
             en            <= 1'b0;
             mode          <= 1'b0;
-            period        <= {WIDTH{1'b0}};
-            duty          <= {WIDTH{1'b0}};
-            prescaler_div <= {WIDTH{1'b0}};
+            period        <= 0;
+            duty1         <= 0;
+            duty2         <= 0;
+            prescaler_div <= 0;
         end 
         else if (wr_en) begin
             case (addr)
@@ -34,9 +36,10 @@ module pwm_register #(
                     en   <= wr_data[0];
                     mode <= wr_data[1];
                 end
-                4'h4: period        <= wr_data;
-                4'h8: duty          <= wr_data;
-                4'hC: prescaler_div <= wr_data;
+                4'h4: period        <= wr_data;   // ARR
+                4'h8: duty1         <= wr_data;   // CCR1
+                4'hC: duty2         <= wr_data;   // CCR2
+                4'hE: prescaler_div <= wr_data;   // chia tần số
             endcase
         end
     end
@@ -47,13 +50,13 @@ module pwm_register #(
             case (addr)
                 4'h0: rd_data = { {WIDTH-2{1'b0}}, mode, en };
                 4'h4: rd_data = period;
-                4'h8: rd_data = duty;
-                4'hC: rd_data = prescaler_div;
-                default: rd_data = {WIDTH{1'b0}};
+                4'h8: rd_data = duty1;
+                4'hC: rd_data = duty2;
+                4'hE: rd_data = prescaler_div;
+                default: rd_data = 0;
             endcase
-        end 
-        else begin
-            rd_data = {WIDTH{1'b0}};
+        end else begin
+            rd_data = 0;
         end
     end
 
