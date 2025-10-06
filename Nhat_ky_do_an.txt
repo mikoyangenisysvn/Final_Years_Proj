@@ -270,3 +270,7 @@ có 1 bộ gần như đầy đủ
 chuẩn bị kiểm thử
 đã được cấp i2c để thử
 nạp lên fpga 9k để test, nếu ko được xây dựng lại từ đầu
+===================================================================================================================================
+Day 11th 6/10/2025: Trung thu Festival
+nạp RTL lên fpga, nháy led, led nháy nhanh
+đang tìm cách giao tiếp i2c apb
