@@ -274,3 +274,8 @@ nạp lên fpga 9k để test, nếu ko được xây dựng lại từ đầu
 Day 11th 6/10/2025: Trung thu Festival
 nạp RTL lên fpga, nháy led, led nháy nhanh
 đang tìm cách giao tiếp i2c apb
+==============================================================================================================================
+Day 12th 7/10/2025: Electricity fixing day
+led breathing, pwm 2 kênh, tưởng code lỗi hóa ra cắm sai chân
+suy nghĩ phát triển thêm
+ý tưởng ghi báo cáo: i2c_apb + timer ip + PWM IP
