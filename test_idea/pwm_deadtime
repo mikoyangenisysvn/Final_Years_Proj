@@ -1,0 +1,47 @@
+module pwm_deadtime #(
+    parameter WIDTH = 16
+)(
+    input  wire              clk,
+    input  wire              rst_n,
+    input  wire              pwm_in,
+    input  wire [WIDTH-1:0]  deadtime_value,
+    output reg               pwm_high_out,
+    output reg               pwm_low_out
+);
+
+    reg pwm_in_d;
+    reg [WIDTH-1:0] dead_cnt;
+    reg inserting_deadtime;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pwm_in_d <= 1'b0;
+            pwm_high_out <= 1'b0;
+            pwm_low_out <= 1'b0;
+            dead_cnt <= 0;
+            inserting_deadtime <= 1'b0;
+        end else begin
+            pwm_in_d <= pwm_in;
+
+            // Detect rising or falling edges
+            if ((pwm_in & ~pwm_in_d) || (~pwm_in & pwm_in_d)) begin
+                inserting_deadtime <= 1'b1;
+                dead_cnt <= deadtime_value;
+            end
+
+            if (inserting_deadtime) begin
+                if (dead_cnt > 0)
+                    dead_cnt <= dead_cnt - 1'b1;
+                else begin
+                    inserting_deadtime <= 1'b0;
+                    pwm_high_out <= pwm_in;
+                    pwm_low_out  <= ~pwm_in;
+                end
+            end else begin
+                pwm_high_out <= pwm_in;
+                pwm_low_out  <= ~pwm_in;
+            end
+        end
+    end
+
+endmodule
