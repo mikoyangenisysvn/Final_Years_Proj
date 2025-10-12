@@ -35,6 +35,9 @@ module pwm_top #(
     assign PWM1_OUT = pwm1_deadtime_high;
     assign PWM2_OUT = pwm2_deadtime_high;
 
+    //wire cho delay
+    wire [WIDTH-1:0] delay1;
+    wire [WIDTH-1:0] delay2;
     // ------------------------------------------
     // I2C Slave Instance
     // ------------------------------------------
@@ -88,6 +91,10 @@ module pwm_top #(
         .prescaler_div(prescaler_div),
         .deadtime_en  (deadtime_en),
         .deadtime_val (deadtime_val)
+        
+        .delay1(delay1),
+        .delay2(delay2),
+
     );
 
     // ------------------------------------------
@@ -119,6 +126,7 @@ module pwm_top #(
     pwm_comparator #(.WIDTH(WIDTH)) u_cmp1 (
         .CNT     (cnt_val),
         .CCR     (duty1),
+        .DELAY   (delay1),
         .PERIOD  (period),
         .ENABLE  (en),
         .PWM_OUT (PWM1_OUT_n)
@@ -127,6 +135,7 @@ module pwm_top #(
     pwm_comparator #(.WIDTH(WIDTH)) u_cmp2 (
         .CNT     (cnt_val),
         .CCR     (duty2),
+        .DELAY   (delay2),
         .PERIOD  (period),
         .ENABLE  (en),
         .PWM_OUT (PWM2_OUT_n)
