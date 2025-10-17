@@ -1,0 +1,72 @@
+//============================================================
+// Module: pwm_deadtime (phiên bản chuẩn có delay thật)
+//============================================================
+module thu #(
+    parameter WIDTH = 16
+)(
+    input  wire              clk,
+    input  wire              rst_n,
+    input  wire              pwm_in,
+    input  wire              deadtime_en,
+    input  wire [WIDTH-1:0]  deadtime_val,
+    output reg               pwm_high,
+    output reg               pwm_low
+);
+
+    reg pwm_in_d;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            pwm_in_d <= 1'b0;
+        else
+            pwm_in_d <= pwm_in;
+    end
+
+    // Deadtime counter & state
+    reg [WIDTH-1:0] dt_counter;
+    reg waiting_posedge, waiting_negedge;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pwm_high <= 1'b0;
+            pwm_low  <= 1'b0;
+            dt_counter <= 0;
+            waiting_posedge <= 1'b0;
+            waiting_negedge <= 1'b0;
+        end else if (!deadtime_en) begin
+            pwm_high <= pwm_in;
+            pwm_low  <= ~pwm_in;
+            waiting_posedge <= 1'b0;
+            waiting_negedge <= 1'b0;
+        end else begin
+            // bắt cạnh lên
+            if (!pwm_in_d && pwm_in) begin
+                pwm_low  <= 1'b0; // tắt kênh N ngay
+                dt_counter <= deadtime_val;
+                waiting_posedge <= 1'b1;
+            end
+            // bắt cạnh xuống
+            else if (pwm_in_d && !pwm_in) begin
+                pwm_high <= 1'b0; // tắt kênh P ngay
+                dt_counter <= deadtime_val;
+                waiting_negedge <= 1'b1;
+            end
+
+            // xử lý đếm trễ
+            if (waiting_posedge || waiting_negedge) begin
+                if (dt_counter > 0)
+                    dt_counter <= dt_counter - 1'b1;
+                else begin
+                    if (waiting_posedge) begin
+                        pwm_high <= 1'b1; // bật sau trễ
+                        waiting_posedge <= 1'b0;
+                    end
+                    if (waiting_negedge) begin
+                        pwm_low <= 1'b1;  // bật sau trễ
+                        waiting_negedge <= 1'b0;
+                    end
+                end
+            end
+        end
+    end
+
+endmodule
