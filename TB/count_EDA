@@ -1,0 +1,102 @@
+`timescale 1ns/1ns
+
+module tb_pwm_counter;
+
+    localparam CNT_WIDTH = 16;
+
+    // DUT I/O
+    reg                     clk_psc_i;
+    reg                     rst_n_i;
+    reg                     ck_cnt_i;
+    reg                     cnt_en_i;
+    reg  [CNT_WIDTH-1:0]    arr_preload_i;
+    wire [CNT_WIDTH-1:0]    cnt_o;
+    wire                    overflow_o;
+
+    // DUT instance
+    pwm_counter #(.CNT_WIDTH(CNT_WIDTH)) dut (
+        .clk_psc_i     (clk_psc_i),
+        .rst_n_i       (rst_n_i),
+        .ck_cnt_i      (ck_cnt_i),
+        .cnt_en_i      (cnt_en_i),
+        .arr_preload_i (arr_preload_i),
+        .cnt_o         (cnt_o),
+        .overflow_o    (overflow_o)
+    );
+
+    // Clock generation
+    always #10 clk_psc_i = ~clk_psc_i;   // 20ns period
+
+    // EPWave dumpfile
+    initial begin
+        $dumpfile("dump.vcd");
+        $dumpvars(0, tb_pwm_counter);
+    end
+
+    // Stimulus
+    initial begin
+        $display("===== START PWM_COUNTER TEST =====");
+
+        // Default values
+        clk_psc_i      = 0;
+        rst_n_i        = 0;
+        ck_cnt_i       = 0;
+        cnt_en_i       = 0;
+        arr_preload_i  = 0;
+
+        // Apply reset
+        #50;
+        rst_n_i = 1;
+
+        //===========================================================
+        // TC1: Counter disabled
+        //===========================================================
+        $display("TC1: Counter disabled");
+        cnt_en_i       = 0;
+        ck_cnt_i       = 1;
+        arr_preload_i  = 5;
+        #100;
+
+        //===========================================================
+        // TC2: Count until overflow
+        //===========================================================
+        $display("TC2: Count until overflow");
+        cnt_en_i       = 1;     // enable counter
+        ck_cnt_i       = 1;
+        arr_preload_i  = 4;     // overflow at 4
+        #200;
+
+        //===========================================================
+        // TC3: Shadow reload after overflow
+        //===========================================================
+        $display("TC3: Shadow reload after overflow");
+        arr_preload_i  = 3;     // new ARR
+        #150;
+
+        //===========================================================
+        // TC4: ck_cnt_i = 0 (counter should hold)
+        //===========================================================
+        $display("TC4: ck_cnt_i = 0; counter holds");
+        ck_cnt_i = 0;
+        #100;
+        ck_cnt_i = 1;
+
+        //===========================================================
+        // TC5: Update preload while running
+        //===========================================================
+        $display("TC5: Update ARR while running");
+        arr_preload_i = 2;
+        #120;
+
+        //===========================================================
+        // TC6: Disable counter -> reset counter
+        //===========================================================
+        $display("TC6: Disable counter");
+        cnt_en_i = 0;
+        #80;
+
+        $display("===== END TEST =====");
+        $finish;
+    end
+
+endmodule
