@@ -1,0 +1,143 @@
+`timescale 1ns/1ns
+
+module tb_pwm_comparator;
+
+    localparam CMP_WIDTH = 16;
+
+    // DUT input regs
+    reg                     clk_psc_i;
+    reg                     rst_n_i;
+    reg  [CMP_WIDTH-1:0]    cnt_i;
+    reg  [CMP_WIDTH-1:0]    cmp_start_i;
+    reg  [CMP_WIDTH-1:0]    cmp_end_i;
+
+    // DUT outputs
+    wire cnt_eq_cmp_start_o;
+    wire cnt_gt_cmp_start_o;
+    wire cnt_eq_cmp_end_o;
+    wire cnt_gt_cmp_end_o;
+
+    // Instantiate DUT
+    pwm_comparator #(.CMP_WIDTH(CMP_WIDTH)) dut (
+        .clk_psc_i           (clk_psc_i),
+        .rst_n_i             (rst_n_i),
+        .cnt_i               (cnt_i),
+        .cmp_start_i         (cmp_start_i),
+        .cmp_end_i           (cmp_end_i),
+        .cnt_eq_cmp_start_o  (cnt_eq_cmp_start_o),
+        .cnt_gt_cmp_start_o  (cnt_gt_cmp_start_o),
+        .cnt_eq_cmp_end_o    (cnt_eq_cmp_end_o),
+        .cnt_gt_cmp_end_o    (cnt_gt_cmp_end_o)
+    );
+
+    //------------------------------------------------------------
+    // Clock generation
+    //------------------------------------------------------------
+    always #10 clk_psc_i = ~clk_psc_i; // 50 MHz equivalent
+
+    //------------------------------------------------------------
+    // EPWave dumpfile
+    //------------------------------------------------------------
+    initial begin
+        $dumpfile("dump.vcd");
+        $dumpvars(0, tb_pwm_comparator);
+    end
+
+    //------------------------------------------------------------
+    // Stimulus
+    //------------------------------------------------------------
+    initial begin
+        $display("===== START pwm_comparator TEST =====");
+
+        // Default initial values
+        clk_psc_i    = 0;
+        rst_n_i      = 0;
+        cnt_i        = 0;
+        cmp_start_i  = 0;
+        cmp_end_i    = 0;
+
+        //--------------------------------------------------------
+        // RESET
+        //--------------------------------------------------------
+        #25;
+        rst_n_i = 1;
+
+        //--------------------------------------------------------
+        // TC1: Basic compare when all zeros
+        //--------------------------------------------------------
+        $display("TC1: CNT = 0, CMP_START = 0, CMP_END = 0");
+        // Inputs:
+        // cnt_i = 0
+        // cmp_start_i = 0
+        // cmp_end_i = 0
+        #30;
+
+        //--------------------------------------------------------
+        // TC2: CNT < CMP_START
+        //--------------------------------------------------------
+        $display("TC2: CNT < CMP_START");
+        // Inputs:
+        // cnt_i = 3
+        // cmp_start_i = 10
+        // cmp_end_i = 20
+        cnt_i        = 3;
+        cmp_start_i  = 10;
+        cmp_end_i    = 20;
+        #40;
+
+        //--------------------------------------------------------
+        // TC3: CNT == CMP_START
+        //--------------------------------------------------------
+        $display("TC3: CNT == CMP_START");
+        // Inputs:
+        // cnt_i = 10
+        cnt_i = 10;
+        #40;
+
+        //--------------------------------------------------------
+        // TC4: CNT > CMP_START but < CMP_END
+        //--------------------------------------------------------
+        $display("TC4: CNT > CMP_START but < CMP_END");
+        // Inputs:
+        // cnt_i = 15
+        cnt_i = 15;
+        #40;
+
+        //--------------------------------------------------------
+        // TC5: CNT == CMP_END
+        //--------------------------------------------------------
+        $display("TC5: CNT == CMP_END");
+        // Inputs:
+        // cnt_i = 20
+        cnt_i = 20;
+        #40;
+
+        //--------------------------------------------------------
+        // TC6: CNT > CMP_END
+        //--------------------------------------------------------
+        $display("TC6: CNT > CMP_END");
+        // Inputs:
+        // cnt_i = 25
+        cnt_i = 25;
+        #40;
+
+        //--------------------------------------------------------
+        // TC7: Sweep CNT to test all comparison boundaries
+        //--------------------------------------------------------
+        $display("TC7: Sweep CNT");
+        // Inputs:
+        // cmp_start_i = 7
+        // cmp_end_i   = 12
+        cmp_start_i = 7;
+        cmp_end_i   = 12;
+
+        repeat (20) begin
+            cnt_i = cnt_i + 1;
+            #20;
+        end
+
+        $display("===== END TEST =====");
+        $finish;
+    end
+
+endmodule
